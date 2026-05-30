@@ -1,0 +1,171 @@
+================================================================================
+  MODEL FEATURE CHANGES — FULL CHANGE LOG & RATIONALE
+  Created: 2026-04-30 (release_year removal)
+  Updated: 2026-05-06 (has_reviews removal + 5 new features)
+================================================================================
+
+
+================================================================================
+  CHANGE 1: RELEASE_YEAR REMOVAL (2026-04-30)
+================================================================================
+
+  PROBLEM: release_year was the single most influential predictor (11.14%
+  importance, Pearson correlation -0.370), but it created survivorship bias
+  and temporal leakage. Older games appeared more "successful" simply because
+  they had more years to accumulate estimated owners.
+
+  DECISION: Remove entirely and retrain.
+
+  IMPACT: 59 → 58 features, Accuracy 80.55% → 78.46%, F1 66.24% → 62.95%.
+  The drop was acceptable — the model removed its strongest but biased predictor.
+
+
+================================================================================
+  CHANGE 2: has_reviews REMOVAL (2026-05-06)
+================================================================================
+
+  PROBLEM: has_reviews was a binary flag derived from num_reviews_total != -1.
+  While originally defended as a "data quality flag," deeper analysis revealed:
+    - Strong class correlation: Flop 51%, Niche Hit 82%, Successful 97%
+    - It is fundamentally derived from post-launch review data
+    - We already removed num_reviews_total as leakage — keeping its binary
+      derivative was inconsistent
+
+  DECISION: Remove has_reviews from the model entirely.
+
+
+================================================================================
+  CHANGE 3: 5 NEW FEATURES ADDED (2026-05-06)
+================================================================================
+
+  To compensate for has_reviews removal and improve model quality, an
+  exhaustive sweep of 17 candidate features was conducted. Five features
+  passed all safety checks:
+
+  Feature            Source              Importance  Leakage Check
+  ----------------------------------------------------------------
+  tag_count          Steam tags dict     8.69% (#1)  corr=0.264 CLEAN
+  screenshot_count   screenshots list    5.71% (#5)  corr=0.147 CLEAN
+  has_website        website URL field   2.19% (#10) corr=0.206 CLEAN
+  has_workshop       categories field    0.47% (#55) corr=0.141 CLEAN
+  required_age       required_age col    0.62% (#50) corr=0.163 CLEAN
+
+  All 5 features are:
+  - 100% available before game launch
+  - Developer-controllable decisions
+  - Free from data leakage (all correlations with target < 0.3)
+  - Independent from existing features (no pairwise correlation > 0.7)
+
+  REJECTED CANDIDATES (insufficient impact):
+  - has_vr (+0.32pp), has_cloud_save (+0.28pp), has_cross_platform (+0.27pp),
+    has_support_email (+0.27pp), desc_has_online (+0.25pp), desc_has_story (+0.34pp),
+    has_remote_play (+0.17pp), has_leaderboards (+0.16pp)
+
+
+================================================================================
+  NET IMPACT SUMMARY
+================================================================================
+
+  Metric         Original (59)    After RY (58)    Final (62)     Total Change
+  ---------------------------------------------------------------------------
+  Accuracy          80.55%           78.46%          77.44%          -3.11%
+  Macro-F1          66.24%           62.95%          63.48%          -2.76%
+  Features             59               58              62              +3
+  Post-launch data  release_year     has_reviews     NONE              ✓
+
+  The final model applies regularization (max_depth=25, min_samples_split=10,
+  min_samples_leaf=4) to prevent overfitting, resulting in slightly lower
+  accuracy but better generalization.
+
+
+================================================================================
+  FINAL FEATURE SET (62 FEATURES)
+================================================================================
+
+  NUMERICAL (7):
+    price, achievements, dlc_count, lang_count, tag_count,
+    screenshot_count, required_age
+
+  BINARY FLAGS (12):
+    is_free, has_achievements, has_dlc, is_early_access, has_multiplayer,
+    has_coop, has_controller, has_trading_cards, has_workshop, has_website,
+    supports_mac, supports_linux
+
+  LANGUAGES (8):
+    lang_chinese, lang_japanese, lang_german, lang_french, lang_russian,
+    lang_korean, lang_brazilian_pt, lang_spanish
+
+  GENRES (10):
+    genre_indie, genre_action, genre_adventure, genre_rpg, genre_strategy,
+    genre_simulation, genre_casual, genre_sports, genre_racing, genre_free_to_play
+
+  TAGS (25):
+    tag_multiplayer, tag_singleplayer, tag_action, tag_co_op, tag_adventure,
+    tag_great_soundtrack, tag_open_world, tag_atmospheric, tag_rpg, tag_story_rich,
+    tag_strategy, tag_free_to_play, tag_online_co_op, tag_first_person, tag_shooter,
+    tag_sandbox, tag_third_person, tag_simulation, tag_funny, tag_difficult,
+    tag_casual, tag_2d_platformer, tag_linear, tag_hidden_object, tag_minimalist
+
+  TOTAL: 7 + 12 + 8 + 10 + 25 = 62 features
+
+  EXCLUDED (kept in CSV, excluded at training time):
+    release_year       — temporal bias
+    pct_pos_total      — post-launch review metric
+    num_reviews_total  — post-launch review metric
+    peak_ccu           — post-launch player metric
+
+  REMOVED FROM DATASET ENTIRELY:
+    has_reviews        — indirect leakage from num_reviews_total
+
+
+================================================================================
+  FILES UPDATED FOR CHANGE 2+3
+================================================================================
+
+  data_preprocessing.py        → has_reviews removed, 5 new features added
+  model_ready_dataset.csv      → regenerated (67 columns)
+  model_training.py            → unchanged (dynamic feature selection)
+  model_training_report.txt    → rewritten with 8 sections
+  model_optimization.py        → unchanged (release_year fix from earlier)
+  model_optimization_report.txt→ rewritten with new CV/tuning results
+  generate_ch5_figures.py      → EXP 1-4 values updated
+  generate_all_figures.py      → Fig 3.1/3.2 counts + EXP values updated
+  chapter5_ml_results_figures/ → 10 figures regenerated
+  chapter3_methodology_figures/→ 4 figures regenerated
+  chapter4_raw_data_eda_figures/→ 6 figures regenerated
+  predictor_app.py             → 5 new features in UI, presets updated
+  templates/predictor.html     → footer updated (62 features)
+  test_predictions.py          → has_reviews removed, new features added
+  audit_features.py            → updated to 62-feature audit
+
+
+================================================================================
+  THESIS TEXT CHANGES (user applies manually in Word)
+================================================================================
+
+  Chapter 3.3:
+    BEFORE: "the final 58-feature matrix"
+    AFTER:  "the final 62-feature matrix"
+
+    BEFORE: "eleven binary flags (is_free, has_achievements, has_dlc,
+             has_reviews, is_early_access, has_multiplayer, has_coop,
+             has_controller, has_trading_cards, supports_mac, supports_linux)"
+    AFTER:  "twelve binary flags (is_free, has_achievements, has_dlc,
+             is_early_access, has_multiplayer, has_coop, has_controller,
+             has_trading_cards, has_workshop, has_website, supports_mac,
+             supports_linux)"
+
+    ADD after feature matrix sentence:
+    "Additionally, the final feature set was expanded with five new pre-launch
+     structural features: tag_count (number of Steam tags), screenshot_count
+     (number of store page screenshots), has_workshop (Steam Workshop support),
+     has_website (official website presence), and required_age (content maturity
+     rating). Conversely, the has_reviews binary flag was removed from the
+     structural feature matrix, as it was derived from post-launch review
+     count data (num_reviews_total), constituting indirect data leakage
+     inconsistent with the study's pre-launch prediction methodology."
+
+
+================================================================================
+  END OF CHANGE LOG
+================================================================================

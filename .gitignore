@@ -1,0 +1,28 @@
+# === Virtual Environment ===
+.venv/
+venv/
+env/
+
+# === Large Data Files (exceeds GitHub 100MB limit) ===
+games_march2025_cleaned.csv
+
+# === Python Cache ===
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# === IDE ===
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# === OS ===
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === Jupyter ===
+.ipynb_checkpoints/

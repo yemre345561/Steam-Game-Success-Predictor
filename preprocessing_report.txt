@@ -1,0 +1,113 @@
+======================================================================
+  STEAM DATA PREPROCESSING PIPELINE
+  Started: 2026-05-06 14:37:07
+======================================================================
+
+Loaded games_march2025_cleaned.csv: 89618 rows x 47 columns
+
+--- STEP 1: Dropping Irrelevant Columns ---
+  Dropped 25 columns: ['score_rank', 'metacritic_score', 'metacritic_url', 'pct_pos_recent', 'num_reviews_recent', 'reviews', 'notes', 'support_url', 'support_email', 'header_image', 'detailed_description', 'about_the_game', 'short_description', 'developers', 'publishers', 'appid', 'name', 'packages', 'user_score', 'recommendations', 'discount', 'average_playtime_forever', 'average_playtime_2weeks', 'median_playtime_forever', 'median_playtime_2weeks']
+  Remaining columns: 22
+
+--- STEP 2: Fixing Sentinel Values ---
+  pct_pos_total sentinel (-1) count: 36419
+  num_reviews_total sentinel (-1) count: 36419
+  Replaced all -1 sentinel values with 0
+
+--- STEP 3: Creating Target Variable (4 Tiers) ---
+  Tier Distribution:
+    Tier 0 (Flop (<20K)): 67,738 (75.59%)
+    Tier 1 (Niche Hit (20K-200K)): 17,240 (19.24%)
+    Tier 2 (Commercial Hit (200K-5M)): 4,454 (4.97%)
+    Tier 3 (Mega Hit (>=5M)): 186 (0.21%)
+
+--- STEP 4: Extracting Numerical Features ---
+  Numerical features retained: ['price', 'achievements', 'dlc_count', 'release_year', 'peak_ccu', 'lang_count', 'required_age']
+    price: min=0.0, median=4.99, max=999.98, nulls=0
+    achievements: min=0, median=5.0, max=9821, nulls=0
+    dlc_count: min=0, median=0.0, max=3427, nulls=0
+    release_year: min=1997, median=2021.0, max=2025, nulls=0
+    peak_ccu: min=0, median=0.0, max=1212356, nulls=0
+    lang_count: min=0, median=1.0, max=103, nulls=0
+    required_age: min=-1, median=0.0, max=21, nulls=0
+
+--- STEP 5: Creating 12 Binary Features ---
+  is_free: 14,160 games = 15.8%
+  has_achievements: 48,528 games = 54.1%
+  has_dlc: 14,230 games = 15.9%
+  is_early_access: 9,113 games = 10.2%
+  has_multiplayer: 16,403 games = 18.3%
+  has_coop: 8,792 games = 9.8%
+  has_controller: 35,471 games = 39.6%
+  has_trading_cards: 10,431 games = 11.6%
+  has_workshop: 2,144 games = 2.4%
+  has_website: 41,114 games = 45.9%
+  supports_mac: 17,438 games = 19.5%
+  supports_linux: 12,627 games = 14.1%
+
+--- STEP 6: Creating 8 Language Flags ---
+  lang_chinese: 25,975 games (29.0%)
+  lang_japanese: 21,069 games (23.5%)
+  lang_german: 22,447 games (25.0%)
+  lang_french: 22,147 games (24.7%)
+  lang_russian: 20,758 games (23.2%)
+  lang_korean: 13,787 games (15.4%)
+  lang_brazilian_pt: 12,777 games (14.3%)
+  lang_spanish: 22,010 games (24.6%)
+
+--- STEP 7: Genre One-Hot Encoding (10 Genres) ---
+  genre_indie: 63,189 games (70.5%)
+  genre_action: 36,842 games (41.1%)
+  genre_adventure: 35,452 games (39.6%)
+  genre_rpg: 16,342 games (18.2%)
+  genre_strategy: 17,366 games (19.4%)
+  genre_simulation: 18,570 games (20.7%)
+  genre_casual: 38,699 games (43.2%)
+  genre_sports: 3,939 games (4.4%)
+  genre_racing: 3,301 games (3.7%)
+  genre_free_to_play: 8,867 games (9.9%)
+
+--- STEP 8: Tag One-Hot Encoding (Top 25 Tags) + Tag Count ---
+  tag_count: mean=10.0, median=9
+  tag_multiplayer: 8,053 (9.0%)
+  tag_singleplayer: 38,502 (43.0%)
+  tag_action: 27,261 (30.4%)
+  tag_co_op: 3,982 (4.4%)
+  tag_adventure: 28,468 (31.8%)
+  tag_great_soundtrack: 3,402 (3.8%)
+  tag_open_world: 4,958 (5.5%)
+  tag_atmospheric: 12,615 (14.1%)
+  tag_rpg: 12,770 (14.2%)
+  tag_story_rich: 10,478 (11.7%)
+  tag_strategy: 14,808 (16.5%)
+  tag_free_to_play: 3,936 (4.4%)
+  tag_online_co_op: 2,509 (2.8%)
+  tag_first_person: 9,511 (10.6%)
+  tag_shooter: 5,440 (6.1%)
+  tag_sandbox: 3,830 (4.3%)
+  tag_third_person: 5,340 (6.0%)
+  tag_simulation: 14,988 (16.7%)
+  tag_funny: 7,476 (8.3%)
+  tag_difficult: 4,850 (5.4%)
+  tag_casual: 29,637 (33.1%)
+  tag_2d_platformer: 4,538 (5.1%)
+  tag_linear: 4,444 (5.0%)
+  tag_hidden_object: 3,631 (4.1%)
+  tag_minimalist: 4,327 (4.8%)
+
+--- STEP 9: Store Page Quality Features ---
+  screenshot_count: mean=8.9, median=7
+  pct_pos_total: mean=45.8, median=60.0
+  num_reviews_total: mean=1315.9, median=15.0
+  peak_ccu: mean=98.3, median=0.0
+
+--- FINAL: Cleanup & Export ---
+  Remaining NaN values: 0
+
+  Exported: model_ready_dataset.csv
+  Final dimensions: 89,618 rows x 67 columns
+  Columns: ['required_age', 'price', 'dlc_count', 'achievements', 'peak_ccu', 'pct_pos_total', 'num_reviews_total', 'target_tier', 'release_year', 'lang_count', 'is_free', 'has_achievements', 'has_dlc', 'is_early_access', 'has_multiplayer', 'has_coop', 'has_controller', 'has_trading_cards', 'has_workshop', 'has_website', 'supports_mac', 'supports_linux', 'lang_chinese', 'lang_japanese', 'lang_german', 'lang_french', 'lang_russian', 'lang_korean', 'lang_brazilian_pt', 'lang_spanish', 'genre_indie', 'genre_action', 'genre_adventure', 'genre_rpg', 'genre_strategy', 'genre_simulation', 'genre_casual', 'genre_sports', 'genre_racing', 'genre_free_to_play', 'tag_count', 'tag_multiplayer', 'tag_singleplayer', 'tag_action', 'tag_co_op', 'tag_adventure', 'tag_great_soundtrack', 'tag_open_world', 'tag_atmospheric', 'tag_rpg', 'tag_story_rich', 'tag_strategy', 'tag_free_to_play', 'tag_online_co_op', 'tag_first_person', 'tag_shooter', 'tag_sandbox', 'tag_third_person', 'tag_simulation', 'tag_funny', 'tag_difficult', 'tag_casual', 'tag_2d_platformer', 'tag_linear', 'tag_hidden_object', 'tag_minimalist', 'screenshot_count']
+
+======================================================================
+  Pipeline completed: 2026-05-06 14:37:36
+======================================================================

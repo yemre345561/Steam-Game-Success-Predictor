@@ -1,0 +1,46 @@
+APPENDIX A: COMPLETE FEATURE DICTIONARY
+
+	This appendix outlines the 62 structural features used to build the classification model. The dataset relies entirely on pre-launch Steam store metadata, ensuring the model's predictions are actionable for developers before a game is released.
+
+	Table A.1 lists these features alongside their assigned categories and descriptions. The data includes seven numerical variables, such as base price and tag count, which account for roughly one-third of the model's total predictive weight. The remaining features are binary indicators. These consist of 12 flags for platform mechanics (e.g., controller support, multiplayer availability), eight language localization flags, ten Steam genre indicators, and 25 specific gameplay tags. The 25 tags were carefully selected through the divergence analysis described in Appendix C.
+
+Table A.1
+Complete Feature Dictionary: 62 Structural Features Used in the Random Forest Classification Model
+
+>>> INSERT IMAGE: appendix_a_feature_dictionary_page1.png <<<
+
+Table A.1 (continued)
+
+>>> INSERT IMAGE: appendix_a_feature_dictionary_page2.png <<<
+
+Note. The complete dataset consists of 89,618 unique game titles. Features beginning with the prefix tag_ were identified through the divergence analysis detailed in Appendix C. The tag_count variable is numerical, representing the absolute number of tags a game received, and operates independently of the individual binary tag indicators. A similar distinction applies to lang_count, which tallies the total number of supported languages.
+
+
+APPENDIX B: HYPERPARAMETER OPTIMIZATION GRID
+
+	The Random Forest classifier was tuned using a grid search with cross-validation to maximize its ability to generalize to unseen data. The optimization targeted four key hyperparameters: the number of trees (n_estimators), maximum tree depth (max_depth), minimum samples required to split (min_samples_split), and minimum samples at a leaf node (min_samples_leaf).
+
+	We tested 54 candidate configurations using three-fold stratified cross-validation. The Macro F1-score was used as the target metric to account for class imbalance, ensuring the model did not simply favor the majority "Flop" class. Table B.1 displays the tested parameters and the final selections. Notably, the final values for n_estimators (300) and max_depth (25) were manually refined after the initial grid search to balance computational limits and avoid overfitting. Other baseline parameters, such as the balanced class weight, were fixed to penalize minority class errors proportionally.
+
+Table B.1
+Hyperparameter Optimization Grid for the Random Forest Classifier
+
+>>> INSERT IMAGE: appendix_b_hyperparameter_grid.png <<<
+
+Note. Selected values marked with an asterisk (*) were determined through post-grid iterative refinement to better balance model complexity and computational constraints. The balanced class-weight parameter proportionally adjusts the loss contribution of each class, ensuring that misclassifying the minority of Successful games carries the same aggregate penalty as misclassifying the majority of Flop games.
+
+
+APPENDIX C: TAG SELECTION DIVERGENCE ANALYSIS
+
+	Steam allows free-form user tags, resulting in a vocabulary too large for a standard tree-based classifier. We applied a divergence-based selection method to identify the 25 most critical gameplay tags and avoid excessive dimensionality.
+
+	This approach compared tag frequencies between the two extreme performance tiers in our dataset: Successful games (over 200,000 owners) and Flops (under 20,000 owners). The Niche Hit tier was excluded to highlight the sharpest contrast. For each candidate tag, we calculated the absolute percentage-point difference between its presence in the Successful tier and the Flop tier.
+
+	As shown in Table C.1, the Multiplayer tag had the highest positive divergence, appearing in 41.9% of Successful titles but only 5.7% of Flops (a 36.1 percentage point gap). Conversely, five tags appeared more frequently in the Flop category. The Casual tag was the most notable negative indicator, appearing in nearly a third of all Flop titles. All 25 retained tags demonstrated sufficient divergence to serve as meaningful split criteria for the model.
+
+Table C.1
+Tag Selection Divergence Analysis: Prevalence Comparison Between Flop and Successful Tiers for the Top 25 User-Applied Tags
+
+>>> INSERT IMAGE: appendix_c_tag_divergence.png <<<
+
+Note. Prevalence refers to the percentage of games within a specific tier that possess a given tag. The analysis compares the Flop tier (n = 67,738) with the Successful tier (n = 4,640). Divergence represents the absolute difference in these prevalence rates, measured in percentage points. The direction column specifies which tier exhibits the higher prevalence for that tag.

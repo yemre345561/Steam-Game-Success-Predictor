@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Steam Game Success Predictor — Thesis Demo</title>
+    <meta name="description" content="AI-powered Steam game commercial success predictor using Random Forest trained on 89,618 games with 62 structural features.">
+    <link rel="stylesheet" href="/static/predictor_style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- HERO -->
+    <header class="hero">
+        <div class="hero-badge">THESIS DEMO</div>
+        <h1>🎮 Steam Game Success Predictor</h1>
+        <p class="subtitle">Random Forest model trained on <strong>{{ "{:,}".format(model_perf.dataset_size) }}</strong> Steam games using <strong>62</strong> pre-launch structural features</p>
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <span class="hs-val">{{ model_perf.accuracy }}%</span>
+                <span class="hs-lbl">Accuracy</span>
+            </div>
+            <div class="hero-divider"></div>
+            <div class="hero-stat">
+                <span class="hs-val">{{ model_perf.macro_f1 }}%</span>
+                <span class="hs-lbl">Macro-F1</span>
+            </div>
+            <div class="hero-divider"></div>
+            <div class="hero-stat">
+                <span class="hs-val">{{ model_perf.cv_mean }}%</span>
+                <span class="hs-lbl">CV Stability</span>
+            </div>
+            <div class="hero-divider"></div>
+            <div class="hero-stat">
+                <span class="hs-val">3</span>
+                <span class="hs-lbl">Classes</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+
+        <!-- STEP 1: PRESETS -->
+        <section class="step">
+            <div class="step-header">
+                <span class="step-num">1</span>
+                <div>
+                    <h2>Choose a Template</h2>
+                    <p class="step-desc">Select the closest game type, then customize below</p>
+                </div>
+            </div>
+            <div class="presets-row">
+                {% for key, preset in presets.items() %}
+                <button class="preset-card" data-preset="{{ key }}">
+                    <span class="preset-icon">{{ preset.name.split(' ')[0] }}</span>
+                    <span class="preset-title">{{ ' '.join(preset.name.split(' ')[1:]) }}</span>
+                    <span class="preset-sub">{{ preset.desc }}</span>
+                </button>
+                {% endfor %}
+            </div>
+        </section>
+
+        <form id="predict-form">
+
+            <!-- STEP 2: CONFIGURE -->
+            <section class="step">
+                <div class="step-header">
+                    <span class="step-num">2</span>
+                    <div>
+                        <h2>Configure Your Game</h2>
+                        <p class="step-desc">Set values and toggle features — <span class="impact-legend">⚡ = high model importance</span></p>
+                    </div>
+                </div>
+
+                <h3 class="group-label">💰 Core Metrics</h3>
+                <div class="basics-grid">
+                    {% for feat_key, feat in feature_groups.numerical.features.items() %}
+                    <div class="basic-field">
+                        <label for="{{ feat_key }}">
+                            {{ feat.label }}
+                            {% if feat_key in top_features %}<span class="impact-badge">⚡ #{{ top_features.index(feat_key) + 1 }}</span>{% endif %}
+                        </label>
+                        <input type="number" id="{{ feat_key }}" name="{{ feat_key }}" 
+                               value="{{ feat.default }}" min="{{ feat.min }}" max="{{ feat.max }}" step="{{ feat.step }}">
+                        <span class="field-hint">Successful avg: {{ feature_stats[feat_key].success_avg }} · Flop avg: {{ feature_stats[feat_key].flop_avg }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <h3 class="group-label">🎮 Game Properties</h3>
+                <div class="pill-grid">
+                    {% for feat_key, feat in feature_groups.binary.features.items() %}
+                    <button type="button" class="pill {% if feat_key in top_features %}high-impact{% endif %}" data-feature="{{ feat_key }}">
+                        {% if feat_key in top_features %}⚡ {% endif %}{{ feat.label }}
+                    </button>
+                    {% endfor %}
+                </div>
+
+                <h3 class="group-label">🌍 Language Support <span class="group-hint">· auto-calculates lang_count</span></h3>
+                <div class="pill-grid">
+                    {% for feat_key, feat in feature_groups.languages.features.items() %}
+                    <button type="button" class="pill lang-pill" data-feature="{{ feat_key }}">{{ feat.label }}</button>
+                    {% endfor %}
+                </div>
+
+                <h3 class="group-label">🏷️ Genres</h3>
+                <div class="pill-grid">
+                    {% for feat_key, feat in feature_groups.genres.features.items() %}
+                    <button type="button" class="pill" data-feature="{{ feat_key }}">{{ feat.label }}</button>
+                    {% endfor %}
+                </div>
+
+                <h3 class="group-label">🔖 Steam Tags <span class="group-hint">· top 25 by class-separation power</span></h3>
+                <div class="pill-grid">
+                    {% for feat_key, feat in feature_groups.tags.features.items() %}
+                    <button type="button" class="pill {% if feat_key in top_features %}high-impact{% endif %}" data-feature="{{ feat_key }}">
+                        {% if feat_key in top_features %}⚡ {% endif %}{{ feat.label }}
+                    </button>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <!-- AUTO-DERIVED SUMMARY -->
+            <div class="auto-summary" id="auto-summary">
+                <h3>🔄 Auto-Derived Features</h3>
+                <div class="auto-chips" id="auto-chips"></div>
+            </div>
+
+            <!-- BIG PREDICT BUTTON -->
+            <button type="submit" class="predict-btn" id="predict-btn">
+                <span class="btn-text">⚡ PREDICT COMMERCIAL SUCCESS</span>
+                <span class="btn-loading" style="display:none;">🔄 Running Random Forest (300 trees)...</span>
+            </button>
+        </form>
+
+        <!-- RESULTS -->
+        <section id="results" class="results-area" style="display:none;">
+
+            <div class="result-card" id="result-card">
+                <div class="result-top" id="result-top"></div>
+                <div class="prob-bars" id="prob-bars"></div>
+            </div>
+
+            <div class="insights-row" id="insights-row" style="display:none;">
+                <div class="insight-box strengths-box">
+                    <h3>✅ Strengths</h3>
+                    <ul id="strengths-list"></ul>
+                </div>
+                <div class="insight-box weaknesses-box">
+                    <h3>⚠️ Weaknesses</h3>
+                    <ul id="weaknesses-list"></ul>
+                </div>
+            </div>
+
+            <div class="reco-box" id="reco-box" style="display:none;">
+                <h3>💡 Strategic Recommendations</h3>
+                <ul id="reco-list"></ul>
+            </div>
+
+            <div class="compare-box">
+                <h3>📊 Your Game vs. Market Averages</h3>
+                <table class="compare-table">
+                    <thead><tr><th>Metric</th><th>Your Value</th><th>Avg Flop</th><th>Avg Successful</th></tr></thead>
+                    <tbody id="compare-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- MODEL RELIABILITY (collapsible) -->
+        <details class="model-details">
+            <summary>📈 Model Reliability & Performance — {{ model_perf.accuracy }}% Test Accuracy</summary>
+            <div class="model-inner">
+                <div class="model-stats">
+                    <div class="stat">
+                        <span class="stat-val">{{ model_perf.accuracy }}%</span>
+                        <span class="stat-lbl">Test Accuracy</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-val">{{ model_perf.macro_f1 }}%</span>
+                        <span class="stat-lbl">Macro-F1</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-val">{{ model_perf.cv_mean }}%</span>
+                        <span class="stat-lbl">CV Mean (5-Fold)</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-val">±{{ model_perf.cv_std }}%</span>
+                        <span class="stat-lbl">CV Std Dev</span>
+                    </div>
+                </div>
+
+                <div class="model-config">
+                    <h4>⚙️ Model Configuration</h4>
+                    <div class="config-grid">
+                        <span class="config-item"><strong>Algorithm:</strong> Random Forest</span>
+                        <span class="config-item"><strong>Trees:</strong> 300</span>
+                        <span class="config-item"><strong>Max Depth:</strong> 25</span>
+                        <span class="config-item"><strong>Min Split:</strong> 10</span>
+                        <span class="config-item"><strong>Min Leaf:</strong> 4</span>
+                        <span class="config-item"><strong>Features:</strong> 62</span>
+                        <span class="config-item"><strong>Train Set:</strong> {{ "{:,}".format(model_perf.train_size) }}</span>
+                        <span class="config-item"><strong>Test Set:</strong> {{ "{:,}".format(model_perf.test_size) }}</span>
+                    </div>
+                </div>
+
+                <h4>📋 Per-Class Performance</h4>
+                <table class="perf-table">
+                    <thead><tr><th>Class</th><th>Precision</th><th>Recall</th><th>F1-Score</th><th>Test Samples</th></tr></thead>
+                    <tbody>
+                        {% for label, m in model_perf.per_class.items() %}
+                        <tr><td><strong>{{ label }}</strong></td><td>{{ m.precision }}%</td><td>{{ m.recall }}%</td><td>{{ m.f1 }}%</td><td>{{ "{:,}".format(m.support) }}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <h4>🏆 Top 10 Feature Importances</h4>
+                <div class="feat-bars">
+                    {% for feat in model_perf.top_features %}
+                    <div class="feat-row">
+                        <span class="feat-rank">#{{ loop.index }}</span>
+                        <span class="feat-name">{{ feat.name }}</span>
+                        <div class="feat-track"><div class="feat-fill" style="width: {{ (feat.importance / model_perf.top_features[0].importance * 100) }}%"></div></div>
+                        <span class="feat-pct">{{ feat.importance }}%</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </details>
+
+    </main>
+
+    <footer>
+        <div class="footer-line">Steam Game Success Predictor · Thesis Project by Yunusemre Açıkoğlu</div>
+        <div class="footer-tech">Random Forest · {{ "{:,}".format(model_perf.dataset_size) }} Games · 62 Pre-Launch Features · {{ model_perf.accuracy }}% Accuracy</div>
+    </footer>
+
+    <script>
+        // Pill toggle
+        document.querySelectorAll('.pill').forEach(pill => {
+            pill.addEventListener('click', () => {
+                pill.classList.toggle('active');
+                updateAutoSummary();
+            });
+        });
+
+        // Number inputs also update summary
+        document.querySelectorAll('#predict-form input[type="number"]').forEach(el => {
+            el.addEventListener('input', updateAutoSummary);
+        });
+
+        // Auto-summary updater
+        function updateAutoSummary() {
+            const data = collectFeatures();
+            const chips = [];
+            
+            if (data['is_free']) chips.push({label: '🆓 Free to Play', cls: 'auto-blue'});
+            if (data['has_achievements']) chips.push({label: `🏆 ${data['achievements']} Achievements`, cls: 'auto-green'});
+            if (data['has_dlc']) chips.push({label: `📦 ${data['dlc_count']} DLCs`, cls: 'auto-green'});
+            if (data['has_multiplayer']) chips.push({label: '👥 Multiplayer', cls: 'auto-blue'});
+            if (data['has_coop']) chips.push({label: '🤝 Co-Op', cls: 'auto-blue'});
+            chips.push({label: `🌐 ${data['lang_count']} Languages`, cls: data['lang_count'] >= 5 ? 'auto-green' : 'auto-gray'});
+            
+            const el = document.getElementById('auto-chips');
+            el.innerHTML = chips.map(c => `<span class="auto-chip ${c.cls}">${c.label}</span>`).join('');
+        }
+
+        // Presets
+        const presets = {{ presets | tojson }};
+        document.querySelectorAll('.preset-card').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const p = presets[btn.dataset.preset];
+                if (!p) return;
+                document.querySelectorAll('.pill').forEach(pill => pill.classList.remove('active'));
+                document.querySelectorAll('#predict-form input[type="number"]').forEach(el => el.value = 0);
+                for (const [key, val] of Object.entries(p.values)) {
+                    const el = document.getElementById(key);
+                    if (el) { el.value = val; continue; }
+                    if (val === 1) {
+                        const pill = document.querySelector(`.pill[data-feature="${key}"]`);
+                        if (pill) pill.classList.add('active');
+                    }
+                }
+                document.querySelectorAll('.preset-card').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                updateAutoSummary();
+            });
+        });
+
+        // Collect features
+        function collectFeatures() {
+            const data = {};
+            document.querySelectorAll('#predict-form input[type="number"]').forEach(el => {
+                data[el.name] = parseFloat(el.value) || 0;
+            });
+            document.querySelectorAll('.pill').forEach(pill => {
+                data[pill.dataset.feature] = pill.classList.contains('active') ? 1 : 0;
+            });
+
+            // Auto-derive
+            data['is_free'] = data['price'] == 0 ? 1 : 0;
+            data['has_achievements'] = data['achievements'] > 0 ? 1 : 0;
+            data['has_dlc'] = data['dlc_count'] > 0 ? 1 : 0;
+            data['has_multiplayer'] = data['tag_multiplayer'] || 0;
+            data['has_coop'] = data['tag_co_op'] || 0;
+            const langKeys = ['lang_chinese','lang_japanese','lang_german','lang_french','lang_russian','lang_korean','lang_brazilian_pt','lang_spanish'];
+            data['lang_count'] = langKeys.filter(k => data[k] === 1).length + 1;
+
+            return data;
+        }
+
+        function fmt(name) { 
+            const labels = {
+                'price': 'Price ($)', 'achievements': 'Achievements', 
+                'dlc_count': 'DLC Count', 'lang_count': 'Language Count'
+            };
+            return labels[name] || name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()); 
+        }
+
+        // Predict
+        document.getElementById('predict-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('predict-btn');
+            btn.querySelector('.btn-text').style.display = 'none';
+            btn.querySelector('.btn-loading').style.display = 'inline';
+            btn.disabled = true;
+
+            try {
+                const resp = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(collectFeatures())
+                });
+                const r = await resp.json();
+                if (r.error) { alert(r.error); return; }
+
+                document.getElementById('results').style.display = 'block';
+                document.getElementById('results').scrollIntoView({behavior: 'smooth'});
+
+                const colors = {0: '#ef4444', 1: '#f59e0b', 2: '#22c55e'};
+                const bgs = {0: 'rgba(239,68,68,0.08)', 1: 'rgba(245,158,11,0.08)', 2: 'rgba(34,197,94,0.08)'};
+                const icons = {0: '💀', 1: '🎯', 2: '🚀'};
+                const descs = {
+                    0: 'High risk of commercial failure — estimated < 20,000 owners',
+                    1: 'Moderate audience — estimated 20,000–200,000 owners', 
+                    2: 'Strong commercial viability — estimated > 200,000 owners'
+                };
+
+                document.getElementById('result-top').innerHTML = `
+                    <div class="result-badge" style="background:${bgs[r.prediction]};border-color:${colors[r.prediction]}">
+                        <span class="result-icon">${icons[r.prediction]}</span>
+                        <span class="result-label" style="color:${colors[r.prediction]}">${r.label}</span>
+                        <span class="result-conf">${r.probabilities[r.label]}% model confidence</span>
+                        <span class="result-desc">${descs[r.prediction]}</span>
+                    </div>`;
+
+                let barsHtml = '';
+                for (const [cls, pct] of Object.entries(r.probabilities)) {
+                    const c = cls === 'Flop' ? '#ef4444' : cls === 'Niche Hit' ? '#f59e0b' : '#22c55e';
+                    const ownerRange = cls === 'Flop' ? '< 20K owners' : cls === 'Niche Hit' ? '20K–200K' : '> 200K owners';
+                    barsHtml += `<div class="pbar"><span class="pbar-label">${cls}<span class="pbar-range">${ownerRange}</span></span><div class="pbar-track"><div class="pbar-fill" style="width:${pct}%;background:${c}"></div></div><span class="pbar-pct">${pct}%</span></div>`;
+                }
+                document.getElementById('prob-bars').innerHTML = barsHtml;
+
+                const ir = document.getElementById('insights-row');
+                if (r.insights.strengths.length || r.insights.weaknesses.length) {
+                    ir.style.display = 'grid';
+                    document.getElementById('strengths-list').innerHTML = r.insights.strengths.length ? r.insights.strengths.map(s=>`<li>${s}</li>`).join('') : '<li class="empty">None detected</li>';
+                    document.getElementById('weaknesses-list').innerHTML = r.insights.weaknesses.length ? r.insights.weaknesses.map(s=>`<li>${s}</li>`).join('') : '<li class="empty">Looking good!</li>';
+                }
+
+                const rb = document.getElementById('reco-box');
+                if (r.insights.recommendations.length) {
+                    rb.style.display = 'block';
+                    document.getElementById('reco-list').innerHTML = r.insights.recommendations.map(s=>`<li>${s}</li>`).join('');
+                } else { rb.style.display = 'none'; }
+
+                let compHtml = '';
+                for (const [feat, v] of Object.entries(r.comparison)) {
+                    const c = v.your_value >= v.success_avg ? '#22c55e' : v.your_value <= v.flop_avg ? '#ef4444' : '#f59e0b';
+                    compHtml += `<tr><td>${fmt(feat)}</td><td style="color:${c};font-weight:700">${v.your_value}</td><td>${v.flop_avg}</td><td>${v.success_avg}</td></tr>`;
+                }
+                document.getElementById('compare-body').innerHTML = compHtml;
+                document.getElementById('result-card').classList.add('pop-in');
+            } catch (err) { alert('Error: ' + err.message); }
+            finally {
+                btn.querySelector('.btn-text').style.display = 'inline';
+                btn.querySelector('.btn-loading').style.display = 'none';
+                btn.disabled = false;
+            }
+        });
+
+        // Initialize auto-summary
+        updateAutoSummary();
+    </script>
+</body>
+</html>
