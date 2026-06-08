@@ -26,6 +26,8 @@ With **18,000+ games released on Steam in 2024** and **75.6% of all games failin
 | **Features Used** | 62 (all pre-launch) |
 | **Dataset** | 89,618 Steam games |
 
+> **Dataset:** [Steam Games Dataset (Artermiloff 2025) on Kaggle](https://www.kaggle.com/datasets/artermiloff/steam-games-dataset)
+
 ---
 
 ## Data Leakage Proof
@@ -101,7 +103,6 @@ The model identifies which features matter most for commercial success:
 ├── generate_appendix.py         # Appendix figures
 ├── raw_data_eda_script.py       # Raw data exploration
 ├── test_predictions.py          # Model testing & validation
-├── model_ready_dataset.csv      # Preprocessed dataset (62 features)
 └── figures/                     # Key result visualizations
 ```
 

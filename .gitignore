@@ -3,8 +3,10 @@
 venv/
 env/
 
-# === Large Data Files (exceeds GitHub 100MB limit) ===
+# === Large Data Files ===
 games_march2025_cleaned.csv
+model_ready_dataset.csv
+steam_games_data.csv
 
 # === Python Cache ===
 __pycache__/
