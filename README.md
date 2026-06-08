@@ -7,7 +7,6 @@
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![scikit-learn](https://img.shields.io/badge/scikit--learn-1.4+-orange.svg)](https://scikit-learn.org)
 [![Flask](https://img.shields.io/badge/Flask-3.0+-green.svg)](https://flask.palletsprojects.com)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---
 
@@ -66,22 +65,22 @@ The model identifies which features matter most for commercial success:
 ## Figures
 
 ### Market Saturation
-<img src="SNM4_tez bölüm 4 resimler - Copy/01_market_saturation.png" width="700">
+<img src="figures/market_saturation.png" width="700">
 
 ### Target Distribution (Class Imbalance)
-<img src="SNM3_tez bölüm 3 resimler - Copy/fig3_4_target_distribution.png" width="700">
+<img src="figures/target_distribution.png" width="700">
 
 ### Data Leakage — Experiment Comparison
-<img src="SNM5_tez bölüm 5 resimler - Copy/fig5_5_experiment_comparison.png" width="700">
+<img src="figures/experiment_comparison.png" width="700">
 
 ### Feature Importance (Top 20)
-<img src="SNM5_tez bölüm 5 resimler - Copy/fig5_6_feature_importance.png" width="700">
+<img src="figures/feature_importance.png" width="700">
 
 ### Cross-Validation Stability
-<img src="SNM5_tez bölüm 5 resimler - Copy/fig5_3_cv_stability.png" width="700">
+<img src="figures/cv_stability.png" width="700">
 
 ### Confusion Matrix
-<img src="SNM5_tez bölüm 5 resimler - Copy/fig5_2_confusion_matrix.png" width="700">
+<img src="figures/confusion_matrix.png" width="700">
 
 ---
 
@@ -103,7 +102,7 @@ The model identifies which features matter most for commercial success:
 ├── raw_data_eda_script.py       # Raw data exploration
 ├── test_predictions.py          # Model testing & validation
 ├── model_ready_dataset.csv      # Preprocessed dataset (62 features)
-└── SNM*/                        # Thesis figures by chapter
+└── figures/                     # Key result visualizations
 ```
 
 ---
@@ -190,8 +189,4 @@ Supervisor: Prof. Dr. Aşkın Demirağ
 Yeditepe University — Information Systems and Technologies  
 [GitHub](https://github.com/yemre345561) · [LinkedIn](https://www.linkedin.com/in/yunus-emre-açıkoğlu-1479b1203)
 
----
 
-## License
-
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.

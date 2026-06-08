@@ -41,3 +41,6 @@ model_training_report.txt
 release_year_removal_changelog.txt
 audit_features.py
 generate_updated_figures.py
+
+# === Thesis Figure Folders (kept locally) ===
+SNM*/
