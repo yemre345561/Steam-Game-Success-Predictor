@@ -26,3 +26,18 @@ desktop.ini
 
 # === Jupyter ===
 .ipynb_checkpoints/
+*.ipynb
+
+# === Internal Reports & Notes ===
+appendix_text.txt
+chapter7_conclusion_brief.txt
+feasibility_report.txt
+feasibility_test.py
+feature_engineering_eda_report.txt
+preprocessing_report.txt
+raw_data_eda_report.txt
+model_optimization_report.txt
+model_training_report.txt
+release_year_removal_changelog.txt
+audit_features.py
+generate_updated_figures.py
