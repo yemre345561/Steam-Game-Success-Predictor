@@ -43,6 +43,11 @@ model_training_report.txt
 release_year_removal_changelog.txt
 audit_features.py
 generate_updated_figures.py
+generate_all_figures.py
+generate_ch5_figures.py
+generate_fe_eda.py
+generate_appendix.py
+raw_data_eda_script.py
 
 # === Thesis Figure Folders (kept locally) ===
 SNM*/

@@ -99,16 +99,11 @@ The model identifies which features matter most for commercial success:
 ├── model_training.py            # Random Forest training & evaluation
 ├── model_optimization.py        # Hyperparameter tuning (GridSearchCV)
 ├── predictor_app.py             # Flask web application
+├── test_predictions.py          # Model testing & validation
 ├── templates/
 │   └── predictor.html           # Web UI template
 ├── static/
 │   └── predictor_style.css      # Web UI styling
-├── generate_all_figures.py      # EDA & methodology visualizations
-├── generate_ch5_figures.py      # ML results visualizations
-├── generate_fe_eda.py           # Feature engineering analysis
-├── generate_appendix.py         # Appendix figures
-├── raw_data_eda_script.py       # Raw data exploration
-├── test_predictions.py          # Model testing & validation
 └── figures/                     # Key result visualizations
 ```
 
