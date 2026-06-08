@@ -84,6 +84,12 @@ The model identifies which features matter most for commercial success:
 ### Confusion Matrix
 <img src="figures/confusion_matrix.png" width="700">
 
+### Binary Features by Success Tier
+<img src="figures/binary_features_heatmap.png" width="700">
+
+### Feature Category Contribution
+<img src="figures/category_contribution.png" width="700">
+
 ---
 
 ## Project Structure
