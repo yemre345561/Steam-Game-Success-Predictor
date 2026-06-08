@@ -188,7 +188,7 @@ Supervisor: Prof. Dr. Aşkın Demirağ
 
 **Yunusemre Açıkoğlu**  
 Yeditepe University — Information Systems and Technologies  
-[GitHub](https://github.com/yemre345561) · [LinkedIn](https://linkedin.com/in/yunusemre-acikoglu)
+[GitHub](https://github.com/yemre345561) · [LinkedIn](https://www.linkedin.com/in/yunus-emre-açıkoğlu-1479b1203)
 
 ---
 
